@@ -1,0 +1,22 @@
+permissions:
+  contents: write
+on:
+  push:
+    tags:
+      - "v*" # run only against tags
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/marketplace/actions/checkout
+      - uses: actions/checkout@v6
+      - name: jq props and store module
+        run: |
+          echo "version=$(cat module.json | jq -r .version)" >> $GITHUB_ENV
+          echo "minimum=$(cat module.json | jq -r .compatibility.minimum)" >> $GITHUB_ENV
+          echo "verified=$(cat module.json | jq -r .compatibility.verified)" >> $GITHUB_ENV
+      # https://github.com/marketplace/actions/gh-release
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.version }}
+          files: module.json

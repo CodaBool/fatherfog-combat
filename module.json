@@ -1,0 +1,25 @@
+{
+  "id": "fatherfog-combat",
+  "title": "Fatherfog Combat",
+  "description": "Makes combat simultaneous",
+  "version": "0.0.1",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14"
+  },
+  "authors": [
+    {
+      "name": "CodaBool",
+      "discord": "codabool",
+      "email": "codabool@pm.me",
+      "url": "https://codabool.com"
+    }
+  ],
+  "esmodules": ["scripts/main.js", "scripts/settings.js", "scripts/audio.js"],
+  "styles": ["global.css"],
+  "socket": true,
+  "url": "https://github.com/CodaBool/fatherfog-combat",
+  "bugs": "https://github.com/CodaBool/fatherfog-combat/issues",
+  "manifest": "https://raw.githubusercontent.com/CodaBool/fatherfog-combat/main/module.json",
+  "download": "https://github.com/CodaBool/fatherfog-combat/archive/v0.0.1.zip"
+}
