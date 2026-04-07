@@ -77,6 +77,21 @@ export function registerSettings() {
     default: 15,
   })
 
+  game.settings.register("fatherfog-combat", "timer", {
+    name: "timer",
+    hint: "How many seconds for each turn",
+    scope: "world",
+    config: true,
+    restricted: true,
+    type: Number,
+    range: {
+      min: 0,
+      max: 120,
+      step: 1,
+    },
+    default: 20,
+  })
+
   game.settings.register("fatherfog-combat", SETTING_KEYS.PORTRAIT_SIZE, {
     name: "Portrait Width",
     hint: "Width of portrait cards. Height is derived automatically.",

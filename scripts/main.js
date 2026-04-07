@@ -4,18 +4,34 @@ let trackerEl = null
 let trackerBodyEl = null
 let trackerRoundEl = null
 let fxHostEl = null
+
+let turnBannerEl = null
+let turnBannerTimerTextEl = null
+let turnBannerBodyEl = null
+let turnBannerSkipWrapEl = null
+let nextUpBannerEl = null
+let lastTurnBannerState = null
+let lastNextUpBannerState = null
 let socketBound = false
 let renderQueued = false
+let bannerInterval = null
+
 
 const SOCKET_ACTIONS = {
   TOGGLE_READY: "toggleReady",
   SET_TARGETED: "setTargeted",
   CLEAR_STATES: "clearStates",
+  REQUEST_SKIP: "requestSkip",
 }
 
 const FLAG_KEYS = {
   READY: "ready",
   TARGETED: "targeted",
+}
+
+const COMBAT_FLAG_SCOPE = "fatherfog-combat"
+const COMBAT_FLAG_KEYS = {
+  TIMER: "turnTimer",
 }
 
 Hooks.once("init", () => {
@@ -47,13 +63,21 @@ Hooks.once("init", () => {
       if (!actor) return
       return setActorReady(actor, !isReady(actor))
     },
+    debugStartTimer: async () => {
+      if (!game.user.isGM) return
+      const combat = getActiveCombat()
+      if (!combat?.started) return
+      await startTimerForCurrentCombatant(combat)
+    },
   }
 })
 
 Hooks.once("ready", () => {
   bindSocket()
   installTracker()
+  installTurnBanners()
   registerHooks()
+  startBannerTicker()
   renderTracker()
 })
 
@@ -61,6 +85,7 @@ function registerHooks() {
   Hooks.on("combatStart", async combat => {
     if (game.user.isGM) {
       await clearCombatActorStates(combat, { reason: "combat-start" })
+      await startTimerForCurrentCombatant(combat)
     }
     showRoundStartFx(combat?.round ?? 1)
     queueRender()
@@ -69,8 +94,11 @@ function registerHooks() {
   Hooks.on("deleteCombat", async combat => {
     if (game.user.isGM) {
       await clearCombatActorStates(combat, { reason: "combat-end" })
+      await clearTurnTimer(combat)
     }
     removeTracker()
+    hideTurnBanner()
+    hideNextUpBanner()
   })
 
   Hooks.on("createCombatant", queueRender)
@@ -86,14 +114,26 @@ function registerHooks() {
     if (Object.prototype.hasOwnProperty.call(changed, "round")) {
       if (game.user.isGM) {
         await clearCombatActorStates(combat, { reason: "round-change" })
+        await startTimerForCurrentCombatant(combat)
       }
       showRoundStartFx(combat.round)
+    }
+
+    if (Object.prototype.hasOwnProperty.call(changed, "turn")) {
+      if (game.user.isGM) {
+        await startTimerForCurrentCombatant(combat)
+      }
+    }
+
+    const timerChanged = foundry.utils.getProperty(changed, `flags.${COMBAT_FLAG_SCOPE}.${COMBAT_FLAG_KEYS.TIMER}`)
+    if (timerChanged !== undefined) {
+      updateTurnBanners()
     }
 
     queueRender()
   })
 
-  Hooks.on("updateActor", (actor, changed, options) => {
+  Hooks.on("updateActor", async (actor, changed, options) => {
     const flagPath = `flags.fatherfog-combat`
     const changedFlags = foundry.utils.getProperty(changed, flagPath)
     if (!changedFlags) return
@@ -124,9 +164,11 @@ function registerHooks() {
       }
     }
 
-    if (readyChanged && actor.isOwner && !game.user.isGM) {
-      // Optional local feedback for the owning player.
-      // Kept intentionally subtle.
+    if (readyChanged && game.user.isGM) {
+      const combat = getActiveCombat()
+      if (combat?.started) {
+        await maybeAdvanceAfterReadyChange(combat, actor)
+      }
     }
 
     queueRender()
@@ -138,10 +180,15 @@ function bindSocket() {
   socketBound = true
 
   game.socket.on(`module.fatherfog-combat`, async payload => {
-    if (!game.user.isGM) return
-    if (!payload || payload.type !== "fatherfog-combat") return
+    if (!game.user.isGM) {
+      return
+    }
 
-    const { action, actorId, value } = payload
+    if (!payload || payload.type !== "fatherfog-combat") {
+      return
+    }
+
+    const { action, actorId, value, requesterUserId } = payload
     const actor = actorId ? game.actors.get(actorId) : null
 
     if (action === SOCKET_ACTIONS.TOGGLE_READY && actor) {
@@ -156,6 +203,14 @@ function bindSocket() {
 
     if (action === SOCKET_ACTIONS.CLEAR_STATES) {
       await clearCombatActorStates(getActiveCombat(), { reason: "socket-clear" })
+      return
+    }
+
+    if (action === SOCKET_ACTIONS.REQUEST_SKIP && actor) {
+      const combat = getActiveCombat()
+      if (!combat?.started) return
+      await gmSkipCombatant(combat, actor, requesterUserId)
+
     }
   })
 }
@@ -215,6 +270,56 @@ function ensureFxHost() {
   return fxHostEl
 }
 
+function installTurnBanners() {
+  if (!turnBannerEl) {
+    turnBannerEl = document.createElement("section")
+    turnBannerEl.id = "fatherfog-combat-turn-banner"
+    turnBannerEl.className = "ffc-turn-banner ffc-hidden"
+    turnBannerEl.innerHTML = `
+      <div class="ffc-turn-banner-inner">
+        <div class="ffc-turn-timer-row">
+          <div class="ffc-turn-timer">
+            <i class="fa-solid fa-hourglass fa-bounce"></i>
+            <span class="ffc-turn-timer-text">${game.settings.get("fatherfog-combat", "timer")}</span>
+          </div>
+        </div>
+        <div class="ffc-turn-banner-body"></div>
+        <div class="ffc-turn-banner-actions"></div>
+      </div>
+    `
+    document.body.appendChild(turnBannerEl)
+    turnBannerTimerTextEl = turnBannerEl.querySelector(".ffc-turn-timer-text")
+    turnBannerBodyEl = turnBannerEl.querySelector(".ffc-turn-banner-body")
+    turnBannerSkipWrapEl = turnBannerEl.querySelector(".ffc-turn-banner-actions")
+  }
+
+  if (!nextUpBannerEl) {
+    nextUpBannerEl = document.createElement("section")
+    nextUpBannerEl.id = "fatherfog-combat-nextup-banner"
+    nextUpBannerEl.className = "ffc-nextup-banner ffc-hidden"
+    document.body.appendChild(nextUpBannerEl)
+  }
+}
+
+function startBannerTicker() {
+  if (bannerInterval) return
+  bannerInterval = window.setInterval(async () => {
+    updateTurnBanners()
+
+    if (!game.user.isGM) return
+
+    const combat = getActiveCombat()
+    if (!combat?.started) return
+
+    const timer = getTurnTimer(combat)
+    if (!timer?.expiresAt || !timer?.combatantId) return
+
+    if (Date.now() >= timer.expiresAt) {
+      await gmHandleTimerExpired(combat, timer.combatantId)
+    }
+  }, 250)
+}
+
 function queueRender() {
   if (renderQueued) return
   renderQueued = true
@@ -230,7 +335,8 @@ function getActiveCombat() {
 
 function getTrackedCombatants(combat = getActiveCombat()) {
   if (!combat) return []
-  return combat.combatants.contents.filter(c => {
+  const source = combat.turns?.length ? combat.turns : combat.combatants.contents
+  return source.filter(c => {
     const actor = c.actor
     if (!actor) return false
     if (!actor.hasPlayerOwner) return false
@@ -238,11 +344,52 @@ function getTrackedCombatants(combat = getActiveCombat()) {
   })
 }
 
+function getPendingCombatants(combat = getActiveCombat()) {
+  return getTrackedCombatants(combat).filter(c => !c.isDefeated && !isReady(c.actor))
+}
+
+function getCurrentCombatant(combat = getActiveCombat()) {
+  if (!combat?.started) return null
+  return combat.combatant ?? combat.turns?.[combat.turn] ?? null
+}
+
+function getCurrentTrackedCombatant(combat = getActiveCombat()) {
+  const c = getCurrentCombatant(combat)
+  if (!c?.actor?.hasPlayerOwner || c.isDefeated) return null
+  return c
+}
+
+function getCurrentRoundPendingOrder(combat = getActiveCombat()) {
+  if (!combat?.started) return []
+
+  const tracked = getTrackedCombatants(combat)
+  if (!tracked.length) return []
+
+  const current = getCurrentTrackedCombatant(combat)
+  if (!current) return tracked.filter(c => !c.isDefeated && !isReady(c.actor))
+
+  const turns = combat.turns ?? []
+  const currentIndex = turns.findIndex(c => c.id === current.id)
+  if (currentIndex < 0) return []
+
+  return turns
+    .slice(currentIndex)
+    .filter(c => c?.actor?.hasPlayerOwner && !c.isDefeated && !isReady(c.actor))
+}
+
+function getNextPendingCombatantThisRound(combat = getActiveCombat()) {
+  const order = getCurrentRoundPendingOrder(combat)
+  if (order.length <= 1) return null
+  return order[1] ?? null
+}
+
 function renderTracker() {
   const combat = getActiveCombat()
 
   if (!combat || !combat.started) {
     if (trackerEl) trackerEl.classList.add("ffc-hidden")
+    hideTurnBanner()
+    hideNextUpBanner()
     return
   }
 
@@ -275,6 +422,7 @@ function createPortraitCard(combatant) {
   const canToggleReady = actor?.isOwner
   const ready = isReady(actor)
   const targeted = isTargeted(actor)
+  const isCurrent = getCurrentTrackedCombatant()?.id === combatant.id
 
   const card = document.createElement("article")
   card.className = [
@@ -282,6 +430,7 @@ function createPortraitCard(combatant) {
     ready ? "is-ready" : "",
     targeted ? "is-targeted" : "",
     combatant.isDefeated ? "is-defeated" : "",
+    isCurrent ? "is-current" : "",
   ].filter(Boolean).join(" ")
 
   card.dataset.actorId = actor.id
@@ -292,6 +441,11 @@ function createPortraitCard(combatant) {
   portraitButton.className = "ffc-portrait-button"
   portraitButton.dataset.action = "toggle-ready"
   portraitButton.disabled = !canToggleReady
+
+  const turnOrder = document.createElement("div")
+  turnOrder.className = "ffc-turn-order"
+  turnOrder.textContent = `${getCombatantDisplayOrder(combatant)}`
+
 
   const img = document.createElement("img")
   img.className = "ffc-portrait-image"
@@ -312,6 +466,7 @@ function createPortraitCard(combatant) {
   targetedMark.dataset.tooltip = "You are the target of an upcoming attack. This will happen before your action."
   targetedMark.dataset.tooltipDirection = "UP"
 
+  portraitButton.appendChild(turnOrder)
   portraitButton.appendChild(img)
   portraitButton.appendChild(readyMark)
   portraitButton.appendChild(targetedMark)
@@ -360,6 +515,27 @@ async function requestToggleReady(actor) {
     type: "fatherfog-combat",
     action: SOCKET_ACTIONS.TOGGLE_READY,
     actorId: actor.id,
+  })
+}
+
+async function requestSkip(actor) {
+
+  if (!actor) {
+    return
+  }
+
+  if (game.user.isGM) {
+    const combat = getActiveCombat()
+
+    if (!combat?.started) return
+    return gmSkipCombatant(combat, actor)
+  }
+
+  game.socket.emit(`module.fatherfog-combat`, {
+    type: "fatherfog-combat",
+    action: SOCKET_ACTIONS.REQUEST_SKIP,
+    actorId: actor.id,
+    requesterUserId: game.user.id,
   })
 }
 
@@ -419,6 +595,7 @@ async function gmAdvanceRound() {
   if (!combat || !game.user.isGM) return
   await clearCombatActorStates(combat, { reason: "gm-next-round" })
   await combat.nextRound()
+  await startTimerForCurrentCombatant(combat)
 }
 
 function showRoundStartFx(roundNumber) {
@@ -485,4 +662,371 @@ function notifyFx({
   }, duration)
 
   return wrap
+}
+
+/* =========================
+   TURN TIMER + BANNERS
+========================= */
+
+function getTurnTimer(combat = getActiveCombat()) {
+  return combat?.getFlag(COMBAT_FLAG_SCOPE, COMBAT_FLAG_KEYS.TIMER) || null
+}
+
+async function setTurnTimer(combat, data) {
+  if (!combat || !game.user.isGM) return
+  await combat.setFlag(COMBAT_FLAG_SCOPE, COMBAT_FLAG_KEYS.TIMER, data)
+}
+
+async function clearTurnTimer(combat) {
+  if (!combat || !game.user.isGM) return
+  await combat.unsetFlag(COMBAT_FLAG_SCOPE, COMBAT_FLAG_KEYS.TIMER)
+}
+
+async function startTimerForCurrentCombatant(combat = getActiveCombat()) {
+  if (!combat?.started || !game.user.isGM) return
+
+  const current = getCurrentTrackedCombatant(combat)
+
+  if (!current || isReady(current.actor)) {
+    const advanced = await gmAdvanceToNextPendingCombatant(combat)
+    if (!advanced) {
+      await clearTurnTimer(combat)
+    }
+    return
+  }
+
+  const turnTime = game.settings.get("fatherfog-combat", "timer")
+  await setTurnTimer(combat, {
+    combatantId: current.id,
+    actorId: current.actor?.id ?? null,
+    startedAt: Date.now(),
+    expiresAt: Date.now() + turnTime * 1000,
+    durationMs: turnTime * 1000,
+    round: combat.round ?? 1,
+  })
+}
+
+async function maybeAdvanceAfterReadyChange(combat, actor) {
+  const current = getCurrentTrackedCombatant(combat)
+  if (!current?.actor || current.actor.id !== actor?.id) {
+    if (!getPendingCombatants(combat).length) {
+      await clearTurnTimer(combat)
+    }
+    return
+  }
+
+  if (!isReady(actor)) return
+
+  const advanced = await gmAdvanceToNextPendingCombatant(combat)
+  if (!advanced) {
+    await clearTurnTimer(combat)
+  }
+}
+
+async function gmHandleTimerExpired(combat, combatantId) {
+  if (!combat?.started || !game.user.isGM) return
+
+  const timer = getTurnTimer(combat)
+  if (!timer?.combatantId || timer.combatantId !== combatantId) return
+
+  const combatant = combat.combatants.get(combatantId)
+  const actor = combatant?.actor
+  if (!combatant || !actor) {
+    await clearTurnTimer(combat)
+    return
+  }
+
+  if (!isReady(actor)) {
+    await setActorReady(actor, true)
+  }
+
+  const advanced = await gmAdvanceToNextPendingCombatant(combat)
+  if (!advanced) {
+    await clearTurnTimer(combat)
+  }
+}
+
+async function gmAdvanceToNextPendingCombatant(combat = getActiveCombat()) {
+  if (!combat?.started || !game.user.isGM) return false
+
+  const turns = combat.turns ?? []
+  if (!turns.length) return false
+
+  const currentTurn = Number.isInteger(combat.turn) ? combat.turn : 0
+
+  for (let i = currentTurn + 1; i < turns.length; i++) {
+    const c = turns[i]
+    if (!c?.actor?.hasPlayerOwner) continue
+    if (c.isDefeated) continue
+    if (isReady(c.actor)) continue
+
+    await combat.update({ turn: i })
+    return true
+  }
+
+  return false
+}
+
+async function gmSkipCombatant(combat, actor, requesterUserId = null) {
+  if (!combat?.started || !game.user.isGM || !actor) {
+    return
+  }
+
+  const current = getCurrentTrackedCombatant(combat)
+  if (!current?.actor || current.actor.id !== actor.id) {
+    return
+  }
+
+  const allowSkip = currentPlayerHasSkippableTargets(combat, current, requesterUserId)
+
+  if (!allowSkip) {
+    return
+  }
+
+  const ordered = getTrackedCombatants(combat).filter(c => !c.isDefeated)
+  const initiatives = ordered
+    .map(c => Number(c.initiative))
+    .filter(n => Number.isFinite(n))
+
+  const lastInitiative = initiatives.length ? Math.min(...initiatives) : 0
+
+  await current.update({
+    initiative: lastInitiative - 1
+  })
+
+
+  combat.setupTurns()
+  const nextIndex = (combat.turns ?? []).findIndex(c =>
+    c.id !== current.id &&
+    c.actor?.hasPlayerOwner &&
+    !c.isDefeated &&
+    !isReady(c.actor)
+  )
+
+
+  if (nextIndex >= 0) {
+    await combat.update({ turn: nextIndex })
+    await startTimerForCurrentCombatant(combat)
+  } else {
+    await clearTurnTimer(combat)
+  }
+
+  queueRender()
+}
+
+function currentPlayerHasSkippableTargets(combat, currentCombatant, requesterUserId = game.user.id) {
+  if (!combat?.started || !currentCombatant?.actor) {
+    return false
+  }
+
+  const requester = game.users.get(requesterUserId)
+  if (!requester) {
+    return false
+  }
+
+  const ownedCombatActorIds = getRequesterOwnedCombatActorIds(combat, requesterUserId)
+  const currentRoundOrder = getCurrentRoundPendingOrder(combat)
+
+  const rows = currentRoundOrder.map(c => ({
+    id: c.id,
+    name: c.name,
+    actorId: c.actor?.id,
+    actorName: c.actor?.name,
+    isCurrent: c.id === currentCombatant.id,
+    isDefeated: !!c.isDefeated,
+    isReady: !!isReady(c.actor),
+    ownedByRequesterInCombat: ownedCombatActorIds.has(c.actor?.id),
+    requesterUserId,
+    requesterUserName: requester.name,
+  }))
+
+  const result = currentRoundOrder.some(c => {
+    if (c.id === currentCombatant.id) return false
+    if (!c.actor || c.isDefeated || isReady(c.actor)) return false
+
+    return !ownedCombatActorIds.has(c.actor.id)
+  })
+
+  return result
+}
+
+function updateTurnBanners() {
+  const combat = getActiveCombat()
+  if (!combat?.started) {
+    hideTurnBanner()
+    hideNextUpBanner()
+    return
+  }
+
+  const pending = getPendingCombatants(combat)
+  if (!pending.length) {
+    hideTurnBanner()
+    hideNextUpBanner()
+    return
+  }
+
+  const timer = getTurnTimer(combat)
+  const current = timer?.combatantId ? combat.combatants.get(timer.combatantId) : getCurrentTrackedCombatant(combat)
+
+  if (!current?.actor || current.isDefeated || isReady(current.actor)) {
+    hideTurnBanner()
+  } else {
+    renderTurnBanner(combat, current, timer)
+  }
+
+  const nextCombatant = getNextPendingCombatantThisRound(combat)
+  if (!nextCombatant?.actor) {
+    hideNextUpBanner()
+  } else {
+    renderNextUpBanner(combat, nextCombatant)
+  }
+}
+
+function renderTurnBanner(combat, combatant, timer) {
+  installTurnBanners()
+
+  const isCurrentOwner = combatant.actor?.isOwner === true
+  const showToThisClient = isCurrentOwner || game.user.isGM
+
+  if (!showToThisClient) {
+    hideTurnBanner()
+    lastTurnBannerState = null
+    return
+  }
+
+  const remaining = timer?.expiresAt
+    ? Math.max(0, Math.ceil((timer.expiresAt - Date.now()) / 1000))
+    : game.settings.get("fatherfog-combat", "timer")
+
+
+  const canSkip = !game.user.isGM &&
+    currentPlayerHasSkippableTargets(
+      combat,
+      combatant,
+      game.user.id,
+      "renderTurnBanner",
+    )
+
+  const nextState = {
+    combatantId: combatant.id,
+    actorId: combatant.actor?.id ?? null,
+    remaining,
+    canSkip,
+    name: combatant.name,
+  }
+
+  turnBannerTimerTextEl.textContent = `${remaining}`
+
+  const bodyHtml = `
+    <div class="ffc-turn-name-line">State what <span>${combatant.name}</span> is doing?</div>
+    <div class="ffc-turn-help-line">Click <span>${combatant.name}'s</span> portrait when done</div>
+  `
+
+  const bodyChanged =
+    !lastTurnBannerState ||
+    lastTurnBannerState.combatantId !== nextState.combatantId ||
+    lastTurnBannerState.name !== nextState.name
+
+  if (bodyChanged) {
+    turnBannerBodyEl.innerHTML = bodyHtml
+  }
+
+  const skipChanged =
+    !lastTurnBannerState ||
+    lastTurnBannerState.canSkip !== nextState.canSkip ||
+    lastTurnBannerState.combatantId !== nextState.combatantId
+
+  if (skipChanged) {
+    turnBannerSkipWrapEl.replaceChildren()
+
+    if (canSkip) {
+      const skipBtn = document.createElement("button")
+      skipBtn.type = "button"
+      skipBtn.className = "ffc-btn ffc-skip-btn"
+      skipBtn.innerHTML = `<i class="fa-solid fa-forward"></i><span>Skip</span>`
+      skipBtn.addEventListener("pointerdown", ev => {
+        ev.preventDefault()
+        ev.stopPropagation()
+      })
+      skipBtn.addEventListener("click", async ev => {
+        ev.preventDefault()
+        ev.stopPropagation()
+        await requestSkip(combatant.actor)
+      })
+      turnBannerSkipWrapEl.appendChild(skipBtn)
+    }
+  }
+
+  turnBannerEl.classList.remove("ffc-hidden")
+  lastTurnBannerState = nextState
+}
+
+function hideTurnBanner() {
+  if (!turnBannerEl) return
+  turnBannerEl.classList.add("ffc-hidden")
+  lastTurnBannerState = null
+}
+
+function renderNextUpBanner(combat, nextCombatant) {
+  // 🔴 hard stop for GM
+  if (game.user.isGM) {
+    hideNextUpBanner()
+    return
+  }
+
+  installTurnBanners()
+
+  const showToThisClient = nextCombatant.actor?.isOwner === true
+  if (!showToThisClient) {
+    hideNextUpBanner()
+    return
+  }
+
+  const nextState = {
+    combatantId: nextCombatant.id,
+    name: nextCombatant.name,
+  }
+
+  const changed =
+    !lastNextUpBannerState ||
+    lastNextUpBannerState.combatantId !== nextState.combatantId ||
+    lastNextUpBannerState.name !== nextState.name
+
+  if (changed) {
+    nextUpBannerEl.innerHTML = `
+      <div class="ffc-nextup-inner">
+        <div class="ffc-nextup-title">You're turn is next.</div>
+        <div class="ffc-nextup-subtitle">Consider what <span>${nextCombatant.name}</span> will do?</div>
+      </div>
+    `
+  }
+
+  nextUpBannerEl.classList.remove("ffc-hidden")
+  lastNextUpBannerState = nextState
+}
+
+function hideNextUpBanner() {
+  if (!nextUpBannerEl) return
+  nextUpBannerEl.classList.add("ffc-hidden")
+  lastNextUpBannerState = null
+}
+
+function getCombatantDisplayOrder(combatant, combat = getActiveCombat()) {
+  if (!combatant || !combat) return "?"
+  const ordered = getTrackedCombatants(combat).filter(c => !c.isDefeated)
+  const index = ordered.findIndex(c => c.id === combatant.id)
+  return index >= 0 ? index + 1 : "?"
+}
+
+function getRequesterOwnedCombatActorIds(combat, requesterUserId = game.user.id) {
+  if (!combat) return new Set()
+
+  const requester = game.users.get(requesterUserId)
+  if (!requester) return new Set()
+
+  return new Set(
+    getTrackedCombatants(combat)
+      .filter(c => c?.actor?.testUserPermission(requester, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER))
+      .map(c => c.actor.id)
+  )
 }
