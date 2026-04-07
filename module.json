@@ -15,7 +15,7 @@
       "url": "https://codabool.com"
     }
   ],
-  "esmodules": ["scripts/main.js", "scripts/settings.js", "scripts/audio.js", "scripts/ui.js",],
+  "esmodules": ["scripts/main.js", "scripts/settings.js", "scripts/audio.js", "scripts/ui.js"],
   "styles": ["global.css"],
   "socket": true,
   "url": "https://github.com/CodaBool/fatherfog-combat",
