@@ -1,4 +1,4 @@
-"fatherfog-combat"import { playSound } from "./audio.js"
+import { playSound } from "./audio.js"
 
 let trackerEl = null
 let trackerBodyEl = null
