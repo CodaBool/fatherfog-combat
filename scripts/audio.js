@@ -1,4 +1,4 @@
-"fatherfog-combat"const SOUND_KEY_MAP = {
+const SOUND_KEY_MAP = {
   round: "roundSound",
   check: "checkSound",
   targetOn: "targetOnSound",
