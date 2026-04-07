@@ -101,10 +101,7 @@ function registerHooks() {
     if (paused) {
       const remaining = Math.max(0, timer.expiresAt - Date.now())
 
-      debugLog("pauseGame -> freezing timer", {
-        remainingMs: remaining,
-        combatantId: timer.combatantId,
-      })
+
 
       pausedTimerRemainingMs = remaining
 
@@ -118,10 +115,6 @@ function registerHooks() {
 
       const newExpires = Date.now() + pausedTimerRemainingMs
 
-      debugLog("pauseGame -> resuming timer", {
-        remainingMs: pausedTimerRemainingMs,
-        newExpires,
-      })
 
       await setTurnTimer(combat, {
         ...timer,
@@ -942,7 +935,8 @@ function renderTurnBanner(combat, combatant, timer) {
     ? Math.max(0, Math.ceil((pausedTimerRemainingMs ?? timer.durationMs) / 1000))
     : timer?.expiresAt
       ? Math.max(0, Math.ceil((timer.expiresAt - Date.now()) / 1000))
-      : TURN_TIME_SECONDS
+      : game.settings.get("fatherfog-combat", "timer")
+
 
 
   const canSkip = !game.user.isGM &&
