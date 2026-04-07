@@ -15,7 +15,7 @@ let lastNextUpBannerState = null
 let socketBound = false
 let renderQueued = false
 let bannerInterval = null
-
+let pausedTimerRemainingMs = null
 
 const SOCKET_ACTIONS = {
   TOGGLE_READY: "toggleReady",
@@ -89,6 +89,49 @@ function registerHooks() {
     }
     showRoundStartFx(combat?.round ?? 1)
     queueRender()
+  })
+
+  Hooks.on("pauseGame", async (paused) => {
+    const combat = getActiveCombat()
+    if (!combat?.started || !game.user.isGM) return
+
+    const timer = getTurnTimer(combat)
+    if (!timer?.expiresAt) return
+
+    if (paused) {
+      const remaining = Math.max(0, timer.expiresAt - Date.now())
+
+      debugLog("pauseGame -> freezing timer", {
+        remainingMs: remaining,
+        combatantId: timer.combatantId,
+      })
+
+      pausedTimerRemainingMs = remaining
+
+      await setTurnTimer(combat, {
+        ...timer,
+        expiresAt: null, // 🔴 disables ticking
+        paused: true,
+      })
+    } else {
+      if (pausedTimerRemainingMs == null) return
+
+      const newExpires = Date.now() + pausedTimerRemainingMs
+
+      debugLog("pauseGame -> resuming timer", {
+        remainingMs: pausedTimerRemainingMs,
+        newExpires,
+      })
+
+      await setTurnTimer(combat, {
+        ...timer,
+        startedAt: Date.now(),
+        expiresAt: newExpires,
+        paused: false,
+      })
+
+      pausedTimerRemainingMs = null
+    }
   })
 
   Hooks.on("deleteCombat", async combat => {
@@ -894,9 +937,12 @@ function renderTurnBanner(combat, combatant, timer) {
     return
   }
 
-  const remaining = timer?.expiresAt
-    ? Math.max(0, Math.ceil((timer.expiresAt - Date.now()) / 1000))
-    : game.settings.get("fatherfog-combat", "timer")
+  const isPaused = timer?.paused === true
+  const remaining = isPaused
+    ? Math.max(0, Math.ceil((pausedTimerRemainingMs ?? timer.durationMs) / 1000))
+    : timer?.expiresAt
+      ? Math.max(0, Math.ceil((timer.expiresAt - Date.now()) / 1000))
+      : TURN_TIME_SECONDS
 
 
   const canSkip = !game.user.isGM &&
@@ -907,6 +953,8 @@ function renderTurnBanner(combat, combatant, timer) {
       "renderTurnBanner",
     )
 
+
+
   const nextState = {
     combatantId: combatant.id,
     actorId: combatant.actor?.id ?? null,
@@ -915,7 +963,9 @@ function renderTurnBanner(combat, combatant, timer) {
     name: combatant.name,
   }
 
-  turnBannerTimerTextEl.textContent = `${remaining}`
+  turnBannerTimerTextEl.textContent = isPaused
+    ? `⏸ ${remaining}`
+    : `${remaining}`
 
   const bodyHtml = `
     <div class="ffc-turn-name-line">State what <span>${combatant.name}</span> is doing?</div>
