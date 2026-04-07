@@ -235,7 +235,6 @@ function getTrackedCombatants(combat = getActiveCombat()) {
     const actor = c.actor
     if (!actor) return false
     if (!actor.hasPlayerOwner) return false
-    if (c.isDefeated && !game.settings.get(MODULE_ID, SETTING_KEYS.SHOW_DEFEATED)) return false
     return true
   })
 }

@@ -1,0 +1,75 @@
+<section class="standard-form">
+  <p class="hint">
+    Leave a field blank to use the module default sound for that user.
+  </p>
+
+  {{#each users}}
+    <fieldset style="margin-bottom: 1rem;">
+      <legend>{{this.name}}</legend>
+
+      <div class="form-group">
+        <label>Round</label>
+        <div class="form-fields">
+          <input type="text" name="users.{{this.id}}.round" value="{{this.round}}" placeholder="Use default" />
+          <button type="button" data-action="pick-file" data-target="users.{{this.id}}.round">
+            <i class="fas fa-file-import"></i>
+          </button>
+          <button type="button" data-action="test-sound" data-user-id="{{this.id}}" data-sound-type="round" data-target="users.{{this.id}}.round">
+            <i class="fas fa-play"></i>
+          </button>
+          <button type="button" data-action="clear-sound" data-target="users.{{this.id}}.round">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Ready Check</label>
+        <div class="form-fields">
+          <input type="text" name="users.{{this.id}}.check" value="{{this.check}}" placeholder="Use default" />
+          <button type="button" data-action="pick-file" data-target="users.{{this.id}}.check">
+            <i class="fas fa-file-import"></i>
+          </button>
+          <button type="button" data-action="test-sound" data-user-id="{{this.id}}" data-sound-type="check" data-target="users.{{this.id}}.check">
+            <i class="fas fa-play"></i>
+          </button>
+          <button type="button" data-action="clear-sound" data-target="users.{{this.id}}.check">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Targeted</label>
+        <div class="form-fields">
+          <input type="text" name="users.{{this.id}}.targetOn" value="{{this.targetOn}}" placeholder="Use default" />
+          <button type="button" data-action="pick-file" data-target="users.{{this.id}}.targetOn">
+            <i class="fas fa-file-import"></i>
+          </button>
+          <button type="button" data-action="test-sound" data-user-id="{{this.id}}" data-sound-type="targetOn" data-target="users.{{this.id}}.targetOn">
+            <i class="fas fa-play"></i>
+          </button>
+          <button type="button" data-action="clear-sound" data-target="users.{{this.id}}.targetOn">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Target Removed</label>
+        <div class="form-fields">
+          <input type="text" name="users.{{this.id}}.targetOff" value="{{this.targetOff}}" placeholder="Use default" />
+          <button type="button" data-action="pick-file" data-target="users.{{this.id}}.targetOff">
+            <i class="fas fa-file-import"></i>
+          </button>
+          <button type="button" data-action="test-sound" data-user-id="{{this.id}}" data-sound-type="targetOff" data-target="users.{{this.id}}.targetOff">
+            <i class="fas fa-play"></i>
+          </button>
+          <button type="button" data-action="clear-sound" data-target="users.{{this.id}}.targetOff">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+    </fieldset>
+  {{/each}}
+</section>
