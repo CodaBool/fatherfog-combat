@@ -17,7 +17,6 @@ Hooks.once("init", () => {
 })
 
 export function registerSettings() {
-  const defaultAudio = "modules/fatherfog-combat/audio/fallout-level-up-ringtone.mp3"
 
   game.settings.register("fatherfog-combat", SETTING_KEYS.ROUND_SOUND, {
     name: "Round Sound",
@@ -26,7 +25,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: defaultAudio,
+    default: "modules/fatherfog-combat/audio/fallout.mp3",
     filePicker: "audio",
   })
 
@@ -37,7 +36,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: defaultAudio,
+    default: "modules/fatherfog-combat/audio/sh2_item.mp3",
     filePicker: "audio",
   })
 
@@ -48,7 +47,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: defaultAudio,
+    default: "modules/fatherfog-combat/audio/sh3_menu.mp3",
     filePicker: "audio",
   })
 
@@ -59,7 +58,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: defaultAudio,
+    default: "modules/fatherfog-combat/audio/generic_5.mp3",
     filePicker: "audio",
   })
 
@@ -73,7 +72,7 @@ export function registerSettings() {
     range: {
       min: 0,
       max: 100,
-      step: 1,
+      step: 10,
     },
     default: 20,
   })
@@ -105,7 +104,7 @@ export function registerSettings() {
       max: 4000,
       step: 50,
     },
-    default: 1600,
+    default: 1800,
   })
 
   game.settings.register("fatherfog-combat", SETTING_KEYS.GM_MUTE_SELF, {
