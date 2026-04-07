@@ -15,7 +15,6 @@ let lastNextUpBannerState = null
 let socketBound = false
 let renderQueued = false
 let bannerInterval = null
-let pausedTimerRemainingMs = null
 
 const SOCKET_ACTIONS = {
   TOGGLE_READY: "toggleReady",
@@ -91,40 +90,40 @@ function registerHooks() {
     queueRender()
   })
 
-  Hooks.on("pauseGame", async (paused) => {
+  Hooks.on("pauseGame", async paused => {
     const combat = getActiveCombat()
     if (!combat?.started || !game.user.isGM) return
 
     const timer = getTurnTimer(combat)
-    if (!timer?.expiresAt) return
+    if (!timer?.combatantId) return
 
     if (paused) {
-      const remaining = Math.max(0, timer.expiresAt - Date.now())
+      const remainingMs = timer.paused
+        ? Math.max(0, Number(timer.remainingMs) || 0)
+        : Math.max(0, (Number(timer.expiresAt) || 0) - Date.now())
 
-
-
-      pausedTimerRemainingMs = remaining
 
       await setTurnTimer(combat, {
         ...timer,
-        expiresAt: null, // 🔴 disables ticking
         paused: true,
-      })
-    } else {
-      if (pausedTimerRemainingMs == null) return
-
-      const newExpires = Date.now() + pausedTimerRemainingMs
-
-
-      await setTurnTimer(combat, {
-        ...timer,
-        startedAt: Date.now(),
-        expiresAt: newExpires,
-        paused: false,
+        remainingMs,
+        expiresAt: null,
       })
 
-      pausedTimerRemainingMs = null
+      return
     }
+
+    if (!timer.paused) return
+
+    const remainingMs = Math.max(0, Number(timer.remainingMs) || 0)
+    const now = Date.now()
+
+    await setTurnTimer(combat, {
+      ...timer,
+      paused: false,
+      startedAt: now,
+      expiresAt: now + remainingMs,
+    })
   })
 
   Hooks.on("deleteCombat", async combat => {
@@ -348,7 +347,9 @@ function startBannerTicker() {
     if (!combat?.started) return
 
     const timer = getTurnTimer(combat)
-    if (!timer?.expiresAt || !timer?.combatantId) return
+    if (!timer?.combatantId) return
+    if (timer.paused) return
+    if (!timer?.expiresAt) return
 
     if (Date.now() >= timer.expiresAt) {
       await gmHandleTimerExpired(combat, timer.combatantId)
@@ -738,6 +739,8 @@ async function startTimerForCurrentCombatant(combat = getActiveCombat()) {
     startedAt: Date.now(),
     expiresAt: Date.now() + turnTime * 1000,
     durationMs: turnTime * 1000,
+    remainingMs: turnTime * 1000,
+    paused: false,
     round: combat.round ?? 1,
   })
 }
@@ -931,13 +934,14 @@ function renderTurnBanner(combat, combatant, timer) {
   }
 
   const isPaused = timer?.paused === true
+
   const remaining = isPaused
-    ? Math.max(0, Math.ceil((pausedTimerRemainingMs ?? timer.durationMs) / 1000))
+    ? Math.max(0, Math.ceil((Number(timer?.remainingMs) || 0) / 1000))
     : timer?.expiresAt
-      ? Math.max(0, Math.ceil((timer.expiresAt - Date.now()) / 1000))
+      ? Math.max(0, Math.ceil((Number(timer.expiresAt) - Date.now()) / 1000))
       : game.settings.get("fatherfog-combat", "timer")
 
-
+  turnBannerTimerTextEl.textContent = isPaused ? `⏸ ${remaining}` : `${remaining}`
 
   const canSkip = !game.user.isGM &&
     currentPlayerHasSkippableTargets(
@@ -957,9 +961,7 @@ function renderTurnBanner(combat, combatant, timer) {
     name: combatant.name,
   }
 
-  turnBannerTimerTextEl.textContent = isPaused
-    ? `⏸ ${remaining}`
-    : `${remaining}`
+
 
   const bodyHtml = `
     <div class="ffc-turn-name-line">State what <span>${combatant.name}</span> is doing?</div>
