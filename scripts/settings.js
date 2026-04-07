@@ -58,7 +58,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: "modules/fatherfog-combat/audio/generic_5.mp3",
+    default: "modules/fatherfog-combat/audio/sh2_menu.mp3",
     filePicker: "audio",
   })
 
@@ -101,10 +101,10 @@ export function registerSettings() {
     type: Number,
     range: {
       min: 800,
-      max: 4000,
+      max: 8000,
       step: 50,
     },
-    default: 1800,
+    default: 4500,
   })
 
   game.settings.register("fatherfog-combat", SETTING_KEYS.GM_MUTE_SELF, {
