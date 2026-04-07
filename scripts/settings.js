@@ -112,6 +112,7 @@ export function registerSettings() {
     hint: "If enabled, Game Masters will not hear this module's sounds on their own client.",
     scope: "client",
     config: true,
+    restricted: true,
     type: Boolean,
     default: false,
   })
