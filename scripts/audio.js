@@ -1,21 +1,21 @@
-import { MODULE_ID, SETTING_KEYS } from "./settings.js"
+import { MODULE_ID } from "./settings.js"
 
 const SOUND_KEY_MAP = {
-  round: SETTING_KEYS.ROUND_SOUND,
-  check: SETTING_KEYS.CHECK_SOUND,
-  targetOn: SETTING_KEYS.TARGET_ON_SOUND,
-  targetOff: SETTING_KEYS.TARGET_OFF_SOUND,
+  round: "roundSound",
+  check: "checkSound",
+  targetOn: "targetOnSound",
+  targetOff: "targetOffSound",
 }
 
 export function playSound(type) {
-  if (game.user.isGM && game.settings.get(MODULE_ID, SETTING_KEYS.GM_MUTE_SELF)) return
+  if (game.user.isGM && game.settings.get(MODULE_ID, "gmMuteSelf")) return
 
   const src = getSoundPathForCurrentUser(type)
   if (!src) return
 
   const volume = Math.max(
     0,
-    Math.min(1, Number(game.settings.get(MODULE_ID, SETTING_KEYS.VOLUME) || 0) / 100),
+    Math.min(1, Number(game.settings.get(MODULE_ID, "volume") || 0) / 100),
   )
 
   try {
@@ -36,7 +36,7 @@ export function testSound(type, userId = game.user.id) {
 
   const volume = Math.max(
     0,
-    Math.min(1, Number(game.settings.get(MODULE_ID, SETTING_KEYS.VOLUME) || 0) / 100),
+    Math.min(1, Number(game.settings.get(MODULE_ID, "volume") || 0) / 100),
   )
 
   try {
@@ -58,7 +58,7 @@ export function getSoundPathForUser(userId, type) {
   const settingKey = SOUND_KEY_MAP[type]
   if (!settingKey) return ""
 
-  const overrides = game.settings.get(MODULE_ID, SETTING_KEYS.AUDIO_OVERRIDES) || {}
+  const overrides = game.settings.get(MODULE_ID, "audioOverrides") || {}
   const perUser = overrides?.[userId] || {}
   const overrideValue = perUser?.[type]
 

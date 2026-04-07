@@ -1,4 +1,4 @@
-import { MODULE_ID, SETTING_KEYS } from "./settings.js"
+import { MODULE_ID } from "./settings.js"
 import { playSound } from "./audio.js"
 
 let trackerEl = null
@@ -256,7 +256,7 @@ function renderTracker() {
 
   trackerRoundEl.textContent = `Round ${combat.round || 1}`
 
-  const width = Number(game.settings.get(MODULE_ID, SETTING_KEYS.PORTRAIT_SIZE) || 156)
+  const width = Number(game.settings.get(MODULE_ID, "portraitSize") || 156)
   const height = Math.round(width * 1.4)
 
   trackerEl.style.setProperty("--ffc-portrait-width", `${width}px`)
@@ -437,7 +437,7 @@ function notifyFx({
   subtitle = "",
   disposition = "neutral",
   icon = "fa-solid fa-sparkles",
-  duration = Number(game.settings.get(MODULE_ID, SETTING_KEYS.FX_DURATION) || 1600),
+  duration = Number(game.settings.get(MODULE_ID, "fxDuration") || 1600),
 } = {}) {
   ensureFxHost()
 
