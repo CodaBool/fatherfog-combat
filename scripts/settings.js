@@ -72,9 +72,9 @@ export function registerSettings() {
     range: {
       min: 0,
       max: 100,
-      step: 10,
+      step: 1,
     },
-    default: 20,
+    default: 15,
   })
 
   game.settings.register("fatherfog-combat", SETTING_KEYS.PORTRAIT_SIZE, {
