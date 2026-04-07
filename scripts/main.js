@@ -1,5 +1,4 @@
-import { MODULE_ID } from "./settings.js"
-import { playSound } from "./audio.js"
+"fatherfog-combat"import { playSound } from "./audio.js"
 
 let trackerEl = null
 let trackerBodyEl = null
@@ -95,7 +94,7 @@ function registerHooks() {
   })
 
   Hooks.on("updateActor", (actor, changed, options) => {
-    const flagPath = `flags.${MODULE_ID}`
+    const flagPath = `flags.fatherfog-combat`
     const changedFlags = foundry.utils.getProperty(changed, flagPath)
     if (!changedFlags) return
 
@@ -103,7 +102,7 @@ function registerHooks() {
     const targetedChanged = Object.prototype.hasOwnProperty.call(changedFlags, FLAG_KEYS.TARGETED)
 
     if (targetedChanged && actor.isOwner && !game.user.isGM) {
-      const manual = options?.[MODULE_ID]?.manualTargetToggle === true
+      const manual = options?.["fatherfog-combat"]?.manualTargetToggle === true
       const nowTargeted = changedFlags[FLAG_KEYS.TARGETED] === true
 
       if (nowTargeted) {
@@ -138,9 +137,9 @@ function bindSocket() {
   if (socketBound) return
   socketBound = true
 
-  game.socket.on(`module.${MODULE_ID}`, async payload => {
+  game.socket.on(`module.fatherfog-combat`, async payload => {
     if (!game.user.isGM) return
-    if (!payload || payload.type !== MODULE_ID) return
+    if (!payload || payload.type !== "fatherfog-combat") return
 
     const { action, actorId, value } = payload
     const actor = actorId ? game.actors.get(actorId) : null
@@ -167,7 +166,7 @@ function installTracker() {
   if (trackerEl) return
 
   trackerEl = document.createElement("section")
-  trackerEl.id = `${MODULE_ID}-tracker`
+  trackerEl.id = `fatherfog-combat-tracker`
   trackerEl.className = "ffc-tracker"
 
   const headerEl = document.createElement("div")
@@ -210,7 +209,7 @@ function removeTracker() {
 function ensureFxHost() {
   if (fxHostEl) return fxHostEl
   fxHostEl = document.createElement("div")
-  fxHostEl.id = `${MODULE_ID}-fx-host`
+  fxHostEl.id = `fatherfog-combat-fx-host`
   fxHostEl.className = "ffc-fx-host"
   document.body.appendChild(fxHostEl)
   return fxHostEl
@@ -256,7 +255,7 @@ function renderTracker() {
 
   trackerRoundEl.textContent = `Round ${combat.round || 1}`
 
-  const width = Number(game.settings.get(MODULE_ID, "portraitSize") || 156)
+  const width = Number(game.settings.get("fatherfog-combat", "portraitSize") || 156)
   const height = Math.round(width * 1.4)
 
   trackerEl.style.setProperty("--ffc-portrait-width", `${width}px`)
@@ -357,8 +356,8 @@ async function requestToggleReady(actor) {
     return setActorReady(actor, !isReady(actor))
   }
 
-  game.socket.emit(`module.${MODULE_ID}`, {
-    type: MODULE_ID,
+  game.socket.emit(`module.fatherfog-combat`, {
+    type: "fatherfog-combat",
     action: SOCKET_ACTIONS.TOGGLE_READY,
     actorId: actor.id,
   })
@@ -366,7 +365,7 @@ async function requestToggleReady(actor) {
 
 async function setActorReady(actor, value) {
   if (!actor) return
-  return actor.setFlag(MODULE_ID, FLAG_KEYS.READY, !!value)
+  return actor.setFlag("fatherfog-combat", FLAG_KEYS.READY, !!value)
 }
 
 async function setActorTargeted(actor, value, { manual = false } = {}) {
@@ -374,10 +373,10 @@ async function setActorTargeted(actor, value, { manual = false } = {}) {
 
   return actor.update(
     {
-      [`flags.${MODULE_ID}.${FLAG_KEYS.TARGETED}`]: !!value,
+      [`flags.fatherfog-combat.${FLAG_KEYS.TARGETED}`]: !!value,
     },
     {
-      [MODULE_ID]: {
+      ["fatherfog-combat"]: {
         manualTargetToggle: manual,
       },
     },
@@ -385,11 +384,11 @@ async function setActorTargeted(actor, value, { manual = false } = {}) {
 }
 
 function isReady(actor) {
-  return actor?.getFlag(MODULE_ID, FLAG_KEYS.READY) === true
+  return actor?.getFlag("fatherfog-combat", FLAG_KEYS.READY) === true
 }
 
 function isTargeted(actor) {
-  return actor?.getFlag(MODULE_ID, FLAG_KEYS.TARGETED) === true
+  return actor?.getFlag("fatherfog-combat", FLAG_KEYS.TARGETED) === true
 }
 
 async function clearCombatActorStates(combat, { reason = "clear" } = {}) {
@@ -400,14 +399,14 @@ async function clearCombatActorStates(combat, { reason = "clear" } = {}) {
 
   const updates = actors.map(actor => {
     const data = {}
-    if (isReady(actor)) data[`flags.${MODULE_ID}.${FLAG_KEYS.READY}`] = false
-    if (isTargeted(actor)) data[`flags.${MODULE_ID}.${FLAG_KEYS.TARGETED}`] = false
+    if (isReady(actor)) data[`flags.fatherfog-combat.${FLAG_KEYS.READY}`] = false
+    if (isTargeted(actor)) data[`flags.fatherfog-combat.${FLAG_KEYS.TARGETED}`] = false
     return { actor, data }
   }).filter(entry => Object.keys(entry.data).length > 0)
 
   for (const { actor, data } of updates) {
     await actor.update(data, {
-      [MODULE_ID]: {
+      ["fatherfog-combat"]: {
         clearReason: reason,
         manualTargetToggle: false,
       },
@@ -437,7 +436,7 @@ function notifyFx({
   subtitle = "",
   disposition = "neutral",
   icon = "fa-solid fa-sparkles",
-  duration = Number(game.settings.get(MODULE_ID, "fxDuration") || 1600),
+  duration = Number(game.settings.get("fatherfog-combat", "fxDuration") || 1600),
 } = {}) {
   ensureFxHost()
 

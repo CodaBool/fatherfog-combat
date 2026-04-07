@@ -1,8 +1,6 @@
 import "./ui.js"
 
-export const MODULE_ID = "fatherfog-combat"
-
-export const SETTING_KEYS = {
+const SETTING_KEYS = {
   ROUND_SOUND: "roundSound",
   CHECK_SOUND: "checkSound",
   TARGET_ON_SOUND: "targetOnSound",
@@ -21,7 +19,7 @@ Hooks.once("init", () => {
 export function registerSettings() {
   const defaultAudio = "modules/fatherfog-combat/audio/fallout-level-up-ringtone.mp3"
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.ROUND_SOUND, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.ROUND_SOUND, {
     name: "Round Sound",
     hint: "Default audio file played when a new round begins.",
     scope: "world",
@@ -32,7 +30,7 @@ export function registerSettings() {
     filePicker: "audio",
   })
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.CHECK_SOUND, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.CHECK_SOUND, {
     name: "Ready Check Sound",
     hint: "Default audio file played when a player marks themselves ready.",
     scope: "world",
@@ -43,7 +41,7 @@ export function registerSettings() {
     filePicker: "audio",
   })
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.TARGET_ON_SOUND, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.TARGET_ON_SOUND, {
     name: "Targeted Sound",
     hint: "Default audio file played for a player when they become targeted.",
     scope: "world",
@@ -54,7 +52,7 @@ export function registerSettings() {
     filePicker: "audio",
   })
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.TARGET_OFF_SOUND, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.TARGET_OFF_SOUND, {
     name: "Target Removed Sound",
     hint: "Default audio file played for a player when the GM manually removes targeted.",
     scope: "world",
@@ -65,7 +63,7 @@ export function registerSettings() {
     filePicker: "audio",
   })
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.VOLUME, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.VOLUME, {
     name: "Volume",
     hint: "Master volume for this module's sound effects.",
     scope: "world",
@@ -80,7 +78,7 @@ export function registerSettings() {
     default: 20,
   })
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.PORTRAIT_SIZE, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.PORTRAIT_SIZE, {
     name: "Portrait Width",
     hint: "Width of portrait cards. Height is derived automatically.",
     scope: "world",
@@ -95,7 +93,7 @@ export function registerSettings() {
     default: 156,
   })
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.FX_DURATION, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.FX_DURATION, {
     name: "Notification Duration",
     hint: "How long important notifications stay on screen, in milliseconds.",
     scope: "world",
@@ -110,7 +108,7 @@ export function registerSettings() {
     default: 1600,
   })
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.GM_MUTE_SELF, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.GM_MUTE_SELF, {
     name: "Mute Audio For GMs",
     hint: "If enabled, Game Masters will not hear this module's sounds on their own client.",
     scope: "client",
@@ -119,7 +117,7 @@ export function registerSettings() {
     default: false,
   })
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.AUDIO_OVERRIDES, {
+  game.settings.register("fatherfog-combat", SETTING_KEYS.AUDIO_OVERRIDES, {
     name: "Audio Overrides Data",
     hint: "Per-user sound overrides.",
     scope: "world",
@@ -129,7 +127,7 @@ export function registerSettings() {
     default: {},
   })
 
-  game.settings.registerMenu(MODULE_ID, "audioOverridesMenu", {
+  game.settings.registerMenu("fatherfog-combat", "audioOverridesMenu", {
     name: "Per-Player Audio Overrides",
     label: "Configure",
     hint: "Override round, ready, targeted, and target removed sounds per user.",

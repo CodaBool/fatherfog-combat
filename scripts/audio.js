@@ -1,6 +1,4 @@
-import { MODULE_ID } from "./settings.js"
-
-const SOUND_KEY_MAP = {
+"fatherfog-combat"const SOUND_KEY_MAP = {
   round: "roundSound",
   check: "checkSound",
   targetOn: "targetOnSound",
@@ -8,14 +6,14 @@ const SOUND_KEY_MAP = {
 }
 
 export function playSound(type) {
-  if (game.user.isGM && game.settings.get(MODULE_ID, "gmMuteSelf")) return
+  if (game.user.isGM && game.settings.get("fatherfog-combat", "gmMuteSelf")) return
 
   const src = getSoundPathForCurrentUser(type)
   if (!src) return
 
   const volume = Math.max(
     0,
-    Math.min(1, Number(game.settings.get(MODULE_ID, "volume") || 0) / 100),
+    Math.min(1, Number(game.settings.get("fatherfog-combat", "volume") || 0) / 100),
   )
 
   try {
@@ -36,7 +34,7 @@ export function testSound(type, userId = game.user.id) {
 
   const volume = Math.max(
     0,
-    Math.min(1, Number(game.settings.get(MODULE_ID, "volume") || 0) / 100),
+    Math.min(1, Number(game.settings.get("fatherfog-combat", "volume") || 0) / 100),
   )
 
   try {
@@ -58,7 +56,7 @@ export function getSoundPathForUser(userId, type) {
   const settingKey = SOUND_KEY_MAP[type]
   if (!settingKey) return ""
 
-  const overrides = game.settings.get(MODULE_ID, "audioOverrides") || {}
+  const overrides = game.settings.get("fatherfog-combat", "audioOverrides") || {}
   const perUser = overrides?.[userId] || {}
   const overrideValue = perUser?.[type]
 
@@ -66,5 +64,5 @@ export function getSoundPathForUser(userId, type) {
     return overrideValue.trim()
   }
 
-  return game.settings.get(MODULE_ID, settingKey) || ""
+  return game.settings.get("fatherfog-combat", settingKey) || ""
 }

@@ -1,11 +1,10 @@
-import { MODULE_ID, SETTING_KEYS } from "./settings.js"
 import { testSound } from "./audio.js"
 
 export class FatherfogCombatAudioOverridesApp extends foundry.applications.api.HandlebarsApplicationMixin(
   foundry.applications.api.ApplicationV2
 ) {
   static DEFAULT_OPTIONS = {
-    id: `${MODULE_ID}-audio-overrides`,
+    id: `fatherfog-combat-audio-overrides`,
     tag: "form",
     window: {
       title: "Per-Player Audio Overrides",
@@ -23,7 +22,7 @@ export class FatherfogCombatAudioOverridesApp extends foundry.applications.api.H
 
   static PARTS = {
     content: {
-      template: `modules/${MODULE_ID}/templates/overrides.hbs`,
+      template: `modules/fatherfog-combat/templates/overrides.hbs`,
     },
     footer: {
       template: "templates/generic/form-footer.hbs",
@@ -31,7 +30,7 @@ export class FatherfogCombatAudioOverridesApp extends foundry.applications.api.H
   }
 
   async _prepareContext() {
-    const overrides = game.settings.get(MODULE_ID, SETTING_KEYS.AUDIO_OVERRIDES) || {}
+    const overrides = game.settings.get("fatherfog-combat", "audioOverrides") || {}
 
     const users = game.users.contents.map(user => {
       const userOverrides = overrides[user.id] || {}
@@ -93,7 +92,7 @@ export class FatherfogCombatAudioOverridesApp extends foundry.applications.api.H
           const audio = new Audio(temp)
           const volume = Math.max(
             0,
-            Math.min(1, Number(game.settings.get(MODULE_ID, SETTING_KEYS.VOLUME) || 0) / 100),
+            Math.min(1, Number(game.settings.get("fatherfog-combat", "volume") || 0) / 100),
           )
           audio.volume = volume
           audio.play().catch(() => {})
@@ -129,7 +128,7 @@ export class FatherfogCombatAudioOverridesApp extends foundry.applications.api.H
       }
     }
 
-    await game.settings.set(MODULE_ID, SETTING_KEYS.AUDIO_OVERRIDES, cleaned)
+    await game.settings.set("fatherfog-combat", "audioOverrides", cleaned)
   }
 }
 
