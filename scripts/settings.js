@@ -23,7 +23,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: "",
+    default: "modules/fatherfog-combat/audio/fallout-level-up-ringtone.mp3",
     filePicker: "audio",
   })
 
@@ -34,7 +34,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: "",
+    default: "modules/fatherfog-combat/audio/fallout-level-up-ringtone.mp3",
     filePicker: "audio",
   })
 
@@ -45,7 +45,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: "",
+    default: "modules/fatherfog-combat/audio/fallout-level-up-ringtone.mp3",
     filePicker: "audio",
   })
 
@@ -56,7 +56,7 @@ export function registerSettings() {
     config: true,
     restricted: true,
     type: String,
-    default: "",
+    default: "modules/fatherfog-combat/audio/fallout-level-up-ringtone.mp3",
     filePicker: "audio",
   })
 
@@ -72,7 +72,7 @@ export function registerSettings() {
       max: 100,
       step: 1,
     },
-    default: 60,
+    default: 30,
   })
 
   game.settings.register(MODULE_ID, SETTING_KEYS.PORTRAIT_SIZE, {
@@ -87,7 +87,7 @@ export function registerSettings() {
       max: 180,
       step: 2,
     },
-    default: 92,
+    default: 156,
   })
 
   game.settings.register(MODULE_ID, SETTING_KEYS.SHOW_DEFEATED, {

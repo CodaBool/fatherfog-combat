@@ -257,8 +257,11 @@ function renderTracker() {
 
   trackerRoundEl.textContent = `Round ${combat.round || 1}`
 
-  const size = Number(game.settings.get(MODULE_ID, SETTING_KEYS.PORTRAIT_SIZE) || 92)
-  trackerEl.style.setProperty("--ffc-portrait-size", `${size}px`)
+  const width = Number(game.settings.get(MODULE_ID, SETTING_KEYS.PORTRAIT_SIZE) || 156)
+  const height = Math.round(width * 1.4)
+
+  trackerEl.style.setProperty("--ffc-portrait-width", `${width}px`)
+  trackerEl.style.setProperty("--ffc-portrait-height", `${height}px`)
 
   trackerBodyEl.replaceChildren()
 
@@ -308,6 +311,8 @@ function createPortraitCard(combatant) {
   const targetedMark = document.createElement("div")
   targetedMark.className = "ffc-targeted-mark"
   targetedMark.innerHTML = `<i class="fa-solid fa-swords fa-bounce"></i>`
+  targetedMark.dataset.tooltip = "You are the target of an upcoming attack. This will happen before your action."
+  targetedMark.dataset.tooltipDirection = "UP"
 
   portraitButton.appendChild(img)
   portraitButton.appendChild(readyMark)
