@@ -460,6 +460,7 @@ function createPortraitCard(combatant) {
   const ready = isReady(actor)
   const targeted = isTargeted(actor)
   const isCurrent = getCurrentTrackedCombatant()?.id === combatant.id
+  const hpPercent = getNetHpPercent(actor)
 
   const card = document.createElement("article")
   card.className = [
@@ -479,10 +480,13 @@ function createPortraitCard(combatant) {
   portraitButton.dataset.action = "toggle-ready"
   portraitButton.disabled = !canToggleReady
 
+  const hpFill = document.createElement("div")
+  hpFill.className = "ffc-hp-fill"
+  hpFill.style.height = `${hpPercent}%`
+
   const turnOrder = document.createElement("div")
   turnOrder.className = "ffc-turn-order"
   turnOrder.textContent = `${getCombatantDisplayOrder(combatant)}`
-
 
   const img = document.createElement("img")
   img.className = "ffc-portrait-image"
@@ -503,8 +507,9 @@ function createPortraitCard(combatant) {
   targetedMark.dataset.tooltip = "You are the target of an upcoming attack. This will happen before your action."
   targetedMark.dataset.tooltipDirection = "UP"
 
-  portraitButton.appendChild(turnOrder)
+  portraitButton.appendChild(hpFill)
   portraitButton.appendChild(img)
+  portraitButton.appendChild(turnOrder)
   portraitButton.appendChild(readyMark)
   portraitButton.appendChild(targetedMark)
 
@@ -1075,4 +1080,11 @@ function getRequesterOwnedCombatActorIds(combat, requesterUserId = game.user.id)
       .filter(c => c?.actor?.testUserPermission(requester, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER))
       .map(c => c.actor.id)
   )
+}
+
+function getNetHpPercent(actor) {
+  const value = Number(actor?.system?.netHP?.value ?? 0)
+  const max = Number(actor?.system?.netHP?.max ?? 0)
+  if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) return 0
+  return Math.max(0, Math.min(100, (1 - value / max) * 100))
 }
