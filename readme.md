@@ -4,6 +4,11 @@
 - Implements Fatherfog combat rules in Foundry. Players can skip or delare their action. Turns are under a timer.
 
 
+<video src="https://gist.github.com/user-attachments/assets/4da95506-d437-41cc-84e2-ab8784deeaec" controls autoplay loop width="720" height="404"></video>
+
+
+
+
 ## What is Fatherfog Combat?
 
 > rounds simulate 10 seconds

@@ -23,7 +23,7 @@
       *********************************     ()           ()
 </pre>
 # Version 0.0.17
-- initial release
+- cleanup code
 
 # Version 0.0.1
 - initial release
