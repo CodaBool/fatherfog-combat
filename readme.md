@@ -1,7 +1,7 @@
 # Fatherfog Combat
 > this is written for the Mothership Foundry system. It hardcodes values for getting HP from that system
 
-- Implements Fatherfog combat rules in Foundry. Players can skip or delare their action. Turns are under a timer.
+- Players can skip or delare their action. Turns are under a timer.
 
 
 <video src="https://gist.github.com/user-attachments/assets/0a594e9c-6c96-4313-95b2-4d6d7e716b44" controls autoplay loop width="720" height="404"></video>
