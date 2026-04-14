@@ -1,24 +1,7 @@
 import "./ui.js"
 
-const SETTING_KEYS = {
-  ROUND_SOUND: "roundSound",
-  CHECK_SOUND: "checkSound",
-  TARGET_ON_SOUND: "targetOnSound",
-  TARGET_OFF_SOUND: "targetOffSound",
-  VOLUME: "volume",
-  PORTRAIT_SIZE: "portraitSize",
-  FX_DURATION: "fxDuration",
-  GM_MUTE_SELF: "gmMuteSelf",
-  AUDIO_OVERRIDES: "audioOverrides",
-}
-
 Hooks.once("init", () => {
-  registerSettings()
-})
-
-export function registerSettings() {
-
-  game.settings.register("fatherfog-combat", SETTING_KEYS.ROUND_SOUND, {
+  game.settings.register("fatherfog-combat", "roundSound", {
     name: "Round Sound",
     hint: "Default audio file played when a new round begins.",
     scope: "world",
@@ -29,7 +12,7 @@ export function registerSettings() {
     filePicker: "audio",
   })
 
-  game.settings.register("fatherfog-combat", SETTING_KEYS.CHECK_SOUND, {
+  game.settings.register("fatherfog-combat", "checkSound", {
     name: "Ready Check Sound",
     hint: "Default audio file played when a player marks themselves ready.",
     scope: "world",
@@ -40,7 +23,7 @@ export function registerSettings() {
     filePicker: "audio",
   })
 
-  game.settings.register("fatherfog-combat", SETTING_KEYS.TARGET_ON_SOUND, {
+  game.settings.register("fatherfog-combat", "targetOnSound", {
     name: "Targeted Sound",
     hint: "Default audio file played for a player when they become targeted.",
     scope: "world",
@@ -51,7 +34,7 @@ export function registerSettings() {
     filePicker: "audio",
   })
 
-  game.settings.register("fatherfog-combat", SETTING_KEYS.TARGET_OFF_SOUND, {
+  game.settings.register("fatherfog-combat", "targetOffSound", {
     name: "Target Removed Sound",
     hint: "Default audio file played for a player when the GM manually removes targeted.",
     scope: "world",
@@ -62,20 +45,6 @@ export function registerSettings() {
     filePicker: "audio",
   })
 
-  game.settings.register("fatherfog-combat", SETTING_KEYS.VOLUME, {
-    name: "Volume",
-    hint: "Master volume for this module's sound effects.",
-    scope: "world",
-    config: true,
-    restricted: true,
-    type: Number,
-    range: {
-      min: 0,
-      max: 100,
-      step: 1,
-    },
-    default: 15,
-  })
 
   game.settings.register("fatherfog-combat", "timer", {
     name: "timer",
@@ -92,47 +61,32 @@ export function registerSettings() {
     default: 20,
   })
 
-  game.settings.register("fatherfog-combat", SETTING_KEYS.PORTRAIT_SIZE, {
-    name: "Portrait Width",
-    hint: "Width of portrait cards. Height is derived automatically.",
-    scope: "world",
-    config: true,
-    restricted: true,
-    type: Number,
-    range: {
-      min: 100,
-      max: 220,
-      step: 2,
-    },
-    default: 156,
-  })
-
-  game.settings.register("fatherfog-combat", SETTING_KEYS.FX_DURATION, {
+  game.settings.register("fatherfog-combat", "fxDuration", {
     name: "Notification Duration",
-    hint: "How long important notifications stay on screen, in milliseconds.",
+    hint: "How long notifications stay on screen, in seconds.",
     scope: "world",
     config: true,
     restricted: true,
     type: Number,
     range: {
-      min: 800,
-      max: 8000,
-      step: 50,
+      min: 1,
+      max: 20,
+      step: 1,
     },
-    default: 4500,
+    default: 5,
   })
 
-  game.settings.register("fatherfog-combat", SETTING_KEYS.GM_MUTE_SELF, {
+  game.settings.register("fatherfog-combat", "gmMuteSelf", {
     name: "Mute Audio For GMs",
-    hint: "If enabled, Game Masters will not hear this module's sounds on their own client.",
+    hint: "If enabled, Game Masters will not hear this module's sounds on their own client. Target is always a player only sound.",
     scope: "client",
     config: true,
     restricted: true,
     type: Boolean,
-    default: false,
+    default: true,
   })
 
-  game.settings.register("fatherfog-combat", SETTING_KEYS.AUDIO_OVERRIDES, {
+  game.settings.register("fatherfog-combat", "audioOverrides", {
     name: "Audio Overrides Data",
     hint: "Per-user sound overrides.",
     scope: "world",
@@ -150,4 +104,4 @@ export function registerSettings() {
     type: FatherfogCombatAudioOverridesApp,
     restricted: true,
   })
-}
+})

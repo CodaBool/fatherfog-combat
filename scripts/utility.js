@@ -1,10 +1,3 @@
-const SOUND_KEY_MAP = {
-  round: "roundSound",
-  check: "checkSound",
-  targetOn: "targetOnSound",
-  targetOff: "targetOffSound",
-}
-
 export function playSound(type) {
   if (game.user.isGM && game.settings.get("fatherfog-combat", "gmMuteSelf")) return
 
@@ -13,7 +6,7 @@ export function playSound(type) {
 
   const volume = Math.max(
     0,
-    Math.min(1, Number(game.settings.get("fatherfog-combat", "volume") || 0) / 100),
+    Math.min(1, game.settings.get("core", "globalInterfaceVolume")),
   )
 
   try {
@@ -23,7 +16,7 @@ export function playSound(type) {
     audio.play().catch(() => {})
     return audio
   } catch (_err) {
-    // intentionally ignored
+    console.log("err", _err)
   }
 }
 
@@ -34,7 +27,7 @@ export function testSound(type, userId = game.user.id) {
 
   const volume = Math.max(
     0,
-    Math.min(1, Number(game.settings.get("fatherfog-combat", "volume") || 0) / 100),
+    Math.min(1, game.settings.get("core", "globalInterfaceVolume")),
   )
 
   try {
@@ -53,7 +46,13 @@ export function getSoundPathForCurrentUser(type) {
 }
 
 export function getSoundPathForUser(userId, type) {
-  const settingKey = SOUND_KEY_MAP[type]
+  const soundKey = {
+    round: "roundSound",
+    check: "checkSound",
+    targetOn: "targetOnSound",
+    targetOff: "targetOffSound",
+  }
+  const settingKey = soundKey[type]
   if (!settingKey) return ""
 
   const overrides = game.settings.get("fatherfog-combat", "audioOverrides") || {}

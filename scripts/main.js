@@ -1,4 +1,4 @@
-import { playSound } from "./audio.js"
+import { playSound } from "./utility.js"
 
 let trackerEl = null
 let trackerBodyEl = null
@@ -439,7 +439,7 @@ function renderTracker() {
 
   trackerRoundEl.textContent = `Round ${combat.round || 1}`
 
-  const width = Number(game.settings.get("fatherfog-combat", "portraitSize") || 156)
+  const width = 156
   const height = Math.round(width * 1.4)
 
   trackerEl.style.setProperty("--ffc-portrait-width", `${width}px`)
@@ -655,7 +655,7 @@ function notifyFx({
   subtitle = "",
   disposition = "neutral",
   icon = "fa-solid fa-sparkles",
-  duration = Number(game.settings.get("fatherfog-combat", "fxDuration") || 1600),
+  duration = game.settings.get("fatherfog-combat", "fxDuration") * 1_000,
 } = {}) {
   ensureFxHost()
 

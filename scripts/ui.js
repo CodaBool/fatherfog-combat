@@ -1,4 +1,4 @@
-import { testSound } from "./audio.js"
+import { testSound } from "./utility.js"
 
 export class FatherfogCombatAudioOverridesApp extends foundry.applications.api.HandlebarsApplicationMixin(
   foundry.applications.api.ApplicationV2
@@ -92,7 +92,7 @@ export class FatherfogCombatAudioOverridesApp extends foundry.applications.api.H
           const audio = new Audio(temp)
           const volume = Math.max(
             0,
-            Math.min(1, Number(game.settings.get("fatherfog-combat", "volume") || 0) / 100),
+            Math.min(1, game.settings.get("core", "globalInterfaceVolume")),
           )
           audio.volume = volume
           audio.play().catch(() => {})
