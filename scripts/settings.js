@@ -8,7 +8,7 @@ Hooks.once("init", () => {
     config: true,
     restricted: true,
     type: String,
-    default: "modules/fatherfog-combat/audio/fallout.mp3",
+    default: "modules/fatherfog-combat/audio/generic_3.mp3",
     filePicker: "audio",
   })
 
@@ -19,7 +19,7 @@ Hooks.once("init", () => {
     config: true,
     restricted: true,
     type: String,
-    default: "modules/fatherfog-combat/audio/sh2_item.mp3",
+    default: "modules/fatherfog-combat/audio/generic_4.mp3",
     filePicker: "audio",
   })
 
@@ -30,7 +30,7 @@ Hooks.once("init", () => {
     config: true,
     restricted: true,
     type: String,
-    default: "modules/fatherfog-combat/audio/sh3_menu.mp3",
+    default: "modules/fatherfog-combat/audio/generic_1.mp3",
     filePicker: "audio",
   })
 
@@ -41,7 +41,7 @@ Hooks.once("init", () => {
     config: true,
     restricted: true,
     type: String,
-    default: "modules/fatherfog-combat/audio/sh2_menu.mp3",
+    default: "modules/fatherfog-combat/audio/generic_5.mp3",
     filePicker: "audio",
   })
 
