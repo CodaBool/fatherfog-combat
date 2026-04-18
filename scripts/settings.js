@@ -76,6 +76,21 @@ Hooks.once("init", () => {
     default: 5,
   })
 
+  game.settings.register("fatherfog-combat", "fxVolume", {
+    name: "Volume modifier",
+    hint: "Volume is mainly determined by Interface but this number is multiplied to the interface volume",
+    scope: "world",
+    config: true,
+    restricted: true,
+    type: Number,
+    range: {
+      min: 0.01,
+      max: 0.99,
+      step: 0.01,
+    },
+    default: 0.5,
+  })
+
   game.settings.register("fatherfog-combat", "gmMuteSelf", {
     name: "Mute Audio For GMs",
     hint: "If enabled, Game Masters will not hear this module's sounds on their own client. Target is always a player only sound.",

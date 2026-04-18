@@ -6,7 +6,7 @@ export function playSound(type) {
 
   const volume = Math.max(
     0,
-    Math.min(1, game.settings.get("core", "globalInterfaceVolume")),
+    Math.min(1, game.settings.get("core", "globalInterfaceVolume") * game.settings.set("fatherfog-combat", "fxVolume")),
   )
 
   try {
@@ -27,7 +27,7 @@ export function testSound(type, userId = game.user.id) {
 
   const volume = Math.max(
     0,
-    Math.min(1, game.settings.get("core", "globalInterfaceVolume")),
+    Math.min(1, game.settings.get("core", "globalInterfaceVolume") * game.settings.set("fatherfog-combat", "fxVolume")),
   )
 
   try {

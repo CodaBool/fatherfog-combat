@@ -92,7 +92,7 @@ export class FatherfogCombatAudioOverridesApp extends foundry.applications.api.H
           const audio = new Audio(temp)
           const volume = Math.max(
             0,
-            Math.min(1, game.settings.get("core", "globalInterfaceVolume")),
+            Math.min(1, game.settings.get("core", "globalInterfaceVolume") * game.settings.set("fatherfog-combat", "fxVolume")),
           )
           audio.volume = volume
           audio.play().catch(() => {})

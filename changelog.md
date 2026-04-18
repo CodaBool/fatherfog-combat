@@ -23,6 +23,9 @@
       *********************************     ()           ()
 </pre>
 
+# Version 0.0.20
+- add a volume setting
+
 # Version 0.0.19
 - cleanup audio files
 
