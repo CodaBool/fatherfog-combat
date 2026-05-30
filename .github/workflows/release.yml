@@ -38,6 +38,8 @@ jobs:
           tag_name: v${{ env.version }}
           files: module.json
       - name: foundry release
+        env:
+          FOUNDRY_TOKEN: ${{ secrets.FOUNDRY_TOKEN }}
         run: |
           JSON_PAYLOAD=$(cat <<EOF
           {
@@ -58,5 +60,5 @@ jobs:
 
           curl -s -X POST https://api.foundryvtt.com/_api/packages/release_version \
             -H "Content-Type: application/json" \
-            -H "Authorization: ${{ secrets.FOUNDRY_TOKEN }}" \
+            -H "Authorization: ${FOUNDRY_TOKEN}" \
             -d "$JSON_PAYLOAD"
