@@ -1,4 +1,5 @@
 # Release flow
+0. update the DOWNLOAD in module.json & version!!!
 1. push to main
 2. git tag -a v0.0.1 -m ""
 3. git push -u origin v0.0.1
