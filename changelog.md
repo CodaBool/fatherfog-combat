@@ -23,6 +23,9 @@
       *********************************     ()           ()
 </pre>
 
+# Version 0.0.22
+- add hp support for Liminal Horror
+
 # Version 0.0.21
 - GM mute was supposed to just be a GM setting
 

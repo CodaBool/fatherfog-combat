@@ -40,7 +40,8 @@ Hooks.once("init", () => {
 
   window.FatherfogCombat = {
     render: renderTracker,
-    clearStates: () => clearCombatActorStates(getActiveCombat(), { reason: "manual-clear" }),
+    clearStates: () =>
+      clearCombatActorStates(getActiveCombat(), { reason: "manual-clear" }),
     nextRound: () => gmAdvanceRound(),
     setTargetedByActorId: async (actorId, targeted = true) => {
       const actor = game.actors.get(actorId)
@@ -102,7 +103,6 @@ function registerHooks() {
         ? Math.max(0, Number(timer.remainingMs) || 0)
         : Math.max(0, (Number(timer.expiresAt) || 0) - Date.now())
 
-
       await setTurnTimer(combat, {
         ...timer,
         paused: true,
@@ -160,7 +160,10 @@ function registerHooks() {
       }
     }
 
-    const timerChanged = foundry.utils.getProperty(changed, `flags.${COMBAT_FLAG_SCOPE}.${COMBAT_FLAG_KEYS.TIMER}`)
+    const timerChanged = foundry.utils.getProperty(
+      changed,
+      `flags.${COMBAT_FLAG_SCOPE}.${COMBAT_FLAG_KEYS.TIMER}`,
+    )
     if (timerChanged !== undefined) {
       updateTurnBanners()
     }
@@ -173,8 +176,14 @@ function registerHooks() {
     const changedFlags = foundry.utils.getProperty(changed, flagPath)
     if (!changedFlags) return
 
-    const readyChanged = Object.prototype.hasOwnProperty.call(changedFlags, FLAG_KEYS.READY)
-    const targetedChanged = Object.prototype.hasOwnProperty.call(changedFlags, FLAG_KEYS.TARGETED)
+    const readyChanged = Object.prototype.hasOwnProperty.call(
+      changedFlags,
+      FLAG_KEYS.READY,
+    )
+    const targetedChanged = Object.prototype.hasOwnProperty.call(
+      changedFlags,
+      FLAG_KEYS.TARGETED,
+    )
 
     if (targetedChanged && actor.isOwner && !game.user.isGM) {
       const manual = options?.["fatherfog-combat"]?.manualTargetToggle === true
@@ -237,7 +246,9 @@ function bindSocket() {
     }
 
     if (action === SOCKET_ACTIONS.CLEAR_STATES) {
-      await clearCombatActorStates(getActiveCombat(), { reason: "socket-clear" })
+      await clearCombatActorStates(getActiveCombat(), {
+        reason: "socket-clear",
+      })
       return
     }
 
@@ -245,7 +256,6 @@ function bindSocket() {
       const combat = getActiveCombat()
       if (!combat?.started) return
       await gmSkipCombatant(combat, actor, requesterUserId)
-
     }
   })
 }
@@ -325,7 +335,9 @@ function installTurnBanners() {
     document.body.appendChild(turnBannerEl)
     turnBannerTimerTextEl = turnBannerEl.querySelector(".ffc-turn-timer-text")
     turnBannerBodyEl = turnBannerEl.querySelector(".ffc-turn-banner-body")
-    turnBannerSkipWrapEl = turnBannerEl.querySelector(".ffc-turn-banner-actions")
+    turnBannerSkipWrapEl = turnBannerEl.querySelector(
+      ".ffc-turn-banner-actions",
+    )
   }
 
   if (!nextUpBannerEl) {
@@ -372,7 +384,9 @@ function getActiveCombat() {
 
 function getTrackedCombatants(combat = getActiveCombat()) {
   if (!combat) return []
-  const source = combat.turns?.length ? combat.turns : combat.combatants.contents
+  const source = combat.turns?.length
+    ? combat.turns
+    : combat.combatants.contents
   return source.filter(c => {
     const actor = c.actor
     if (!actor) return false
@@ -382,7 +396,9 @@ function getTrackedCombatants(combat = getActiveCombat()) {
 }
 
 function getPendingCombatants(combat = getActiveCombat()) {
-  return getTrackedCombatants(combat).filter(c => !c.isDefeated && !isReady(c.actor))
+  return getTrackedCombatants(combat).filter(
+    c => !c.isDefeated && !isReady(c.actor),
+  )
 }
 
 function getCurrentCombatant(combat = getActiveCombat()) {
@@ -469,7 +485,9 @@ function createPortraitCard(combatant) {
     targeted ? "is-targeted" : "",
     combatant.isDefeated ? "is-defeated" : "",
     isCurrent ? "is-current" : "",
-  ].filter(Boolean).join(" ")
+  ]
+    .filter(Boolean)
+    .join(" ")
 
   card.dataset.actorId = actor.id
   card.dataset.combatantId = combatant.id
@@ -504,7 +522,8 @@ function createPortraitCard(combatant) {
   const targetedMark = document.createElement("div")
   targetedMark.className = "ffc-targeted-mark"
   targetedMark.innerHTML = `<i class="fa-solid fa-swords fa-bounce"></i>`
-  targetedMark.dataset.tooltip = "You are the target of an upcoming attack. This will happen before your action."
+  targetedMark.dataset.tooltip =
+    "You are the target of an upcoming attack. This will happen before your action."
   targetedMark.dataset.tooltipDirection = "UP"
 
   portraitButton.appendChild(hpFill)
@@ -561,7 +580,6 @@ async function requestToggleReady(actor) {
 }
 
 async function requestSkip(actor) {
-
   if (!actor) {
     return
   }
@@ -612,15 +630,25 @@ function isTargeted(actor) {
 async function clearCombatActorStates(combat, { reason = "clear" } = {}) {
   if (!combat || !game.user.isGM) return
 
-  const actors = [...new Set(getTrackedCombatants(combat).map(c => c.actor).filter(Boolean))]
+  const actors = [
+    ...new Set(
+      getTrackedCombatants(combat)
+        .map(c => c.actor)
+        .filter(Boolean),
+    ),
+  ]
   if (!actors.length) return
 
-  const updates = actors.map(actor => {
-    const data = {}
-    if (isReady(actor)) data[`flags.fatherfog-combat.${FLAG_KEYS.READY}`] = false
-    if (isTargeted(actor)) data[`flags.fatherfog-combat.${FLAG_KEYS.TARGETED}`] = false
-    return { actor, data }
-  }).filter(entry => Object.keys(entry.data).length > 0)
+  const updates = actors
+    .map(actor => {
+      const data = {}
+      if (isReady(actor))
+        data[`flags.fatherfog-combat.${FLAG_KEYS.READY}`] = false
+      if (isTargeted(actor))
+        data[`flags.fatherfog-combat.${FLAG_KEYS.TARGETED}`] = false
+      return { actor, data }
+    })
+    .filter(entry => Object.keys(entry.data).length > 0)
 
   for (const { actor, data } of updates) {
     await actor.update(data, {
@@ -695,9 +723,12 @@ function notifyFx({
   wrap.appendChild(content)
   fxHostEl.appendChild(wrap)
 
-  setTimeout(() => {
-    wrap.classList.add("is-leaving")
-  }, Math.max(200, duration - 220))
+  setTimeout(
+    () => {
+      wrap.classList.add("is-leaving")
+    },
+    Math.max(200, duration - 220),
+  )
 
   setTimeout(() => {
     wrap.remove()
@@ -821,7 +852,11 @@ async function gmSkipCombatant(combat, actor, requesterUserId = null) {
     return
   }
 
-  const allowSkip = currentPlayerHasSkippableTargets(combat, current, requesterUserId)
+  const allowSkip = currentPlayerHasSkippableTargets(
+    combat,
+    current,
+    requesterUserId,
+  )
 
   if (!allowSkip) {
     return
@@ -835,18 +870,17 @@ async function gmSkipCombatant(combat, actor, requesterUserId = null) {
   const lastInitiative = initiatives.length ? Math.min(...initiatives) : 0
 
   await current.update({
-    initiative: lastInitiative - 1
+    initiative: lastInitiative - 1,
   })
 
-
   combat.setupTurns()
-  const nextIndex = (combat.turns ?? []).findIndex(c =>
-    c.id !== current.id &&
-    c.actor?.hasPlayerOwner &&
-    !c.isDefeated &&
-    !isReady(c.actor)
+  const nextIndex = (combat.turns ?? []).findIndex(
+    c =>
+      c.id !== current.id &&
+      c.actor?.hasPlayerOwner &&
+      !c.isDefeated &&
+      !isReady(c.actor),
   )
-
 
   if (nextIndex >= 0) {
     await combat.update({ turn: nextIndex })
@@ -858,7 +892,11 @@ async function gmSkipCombatant(combat, actor, requesterUserId = null) {
   queueRender()
 }
 
-function currentPlayerHasSkippableTargets(combat, currentCombatant, requesterUserId = game.user.id) {
+function currentPlayerHasSkippableTargets(
+  combat,
+  currentCombatant,
+  requesterUserId = game.user.id,
+) {
   if (!combat?.started || !currentCombatant?.actor) {
     return false
   }
@@ -868,7 +906,10 @@ function currentPlayerHasSkippableTargets(combat, currentCombatant, requesterUse
     return false
   }
 
-  const ownedCombatActorIds = getRequesterOwnedCombatActorIds(combat, requesterUserId)
+  const ownedCombatActorIds = getRequesterOwnedCombatActorIds(
+    combat,
+    requesterUserId,
+  )
   const currentRoundOrder = getCurrentRoundPendingOrder(combat)
 
   const rows = currentRoundOrder.map(c => ({
@@ -910,7 +951,9 @@ function updateTurnBanners() {
   }
 
   const timer = getTurnTimer(combat)
-  const current = timer?.combatantId ? combat.combatants.get(timer.combatantId) : getCurrentTrackedCombatant(combat)
+  const current = timer?.combatantId
+    ? combat.combatants.get(timer.combatantId)
+    : getCurrentTrackedCombatant(combat)
 
   if (!current?.actor || current.isDefeated || isReady(current.actor)) {
     hideTurnBanner()
@@ -946,17 +989,18 @@ function renderTurnBanner(combat, combatant, timer) {
       ? Math.max(0, Math.ceil((Number(timer.expiresAt) - Date.now()) / 1000))
       : game.settings.get("fatherfog-combat", "timer")
 
-  turnBannerTimerTextEl.textContent = isPaused ? `⏸ ${remaining}` : `${remaining}`
+  turnBannerTimerTextEl.textContent = isPaused
+    ? `⏸ ${remaining}`
+    : `${remaining}`
 
-  const canSkip = !game.user.isGM &&
+  const canSkip =
+    !game.user.isGM &&
     currentPlayerHasSkippableTargets(
       combat,
       combatant,
       game.user.id,
       "renderTurnBanner",
     )
-
-
 
   const nextState = {
     combatantId: combatant.id,
@@ -965,8 +1009,6 @@ function renderTurnBanner(combat, combatant, timer) {
     canSkip,
     name: combatant.name,
   }
-
-
 
   const bodyHtml = `
     <div class="ffc-turn-name-line">State what <span>${combatant.name}</span> is doing?</div>
@@ -1069,7 +1111,10 @@ function getCombatantDisplayOrder(combatant, combat = getActiveCombat()) {
   return index >= 0 ? index + 1 : "?"
 }
 
-function getRequesterOwnedCombatActorIds(combat, requesterUserId = game.user.id) {
+function getRequesterOwnedCombatActorIds(
+  combat,
+  requesterUserId = game.user.id,
+) {
   if (!combat) return new Set()
 
   const requester = game.users.get(requesterUserId)
@@ -1077,14 +1122,29 @@ function getRequesterOwnedCombatActorIds(combat, requesterUserId = game.user.id)
 
   return new Set(
     getTrackedCombatants(combat)
-      .filter(c => c?.actor?.testUserPermission(requester, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER))
-      .map(c => c.actor.id)
+      .filter(c =>
+        c?.actor?.testUserPermission(
+          requester,
+          CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER,
+        ),
+      )
+      .map(c => c.actor.id),
   )
 }
 
 function getNetHpPercent(actor) {
-  const value = Number(actor?.system?.netHP?.value ?? 0)
-  const max = Number(actor?.system?.netHP?.max ?? 0)
+  let value, max
+  if (game.system.id === "mosh") {
+    value = Number(actor?.system?.netHP?.value ?? 0)
+    max = Number(actor?.system?.netHP?.max ?? 0)
+  } else if (game.system.id === "liminal-horror") {
+    value = Number(actor?.system?.defense?.hp ?? 0)
+    max = Number(actor?.system?.defense?.hpMax ?? 0)
+  } else {
+    console.error("Fatherfog-combat | system is not supported", game.system.id)
+    value = 0
+    max = 0
+  }
   if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) return 0
   return Math.max(0, Math.min(100, (1 - value / max) * 100))
 }
