@@ -23,6 +23,9 @@
       *********************************     ()           ()
 </pre>
 
+# Version 0.0.21
+- GM mute was supposed to just be a GM setting
+
 # Version 0.0.20
 - add a volume setting
 

@@ -45,7 +45,6 @@ Hooks.once("init", () => {
     filePicker: "audio",
   })
 
-
   game.settings.register("fatherfog-combat", "timer", {
     name: "timer",
     hint: "How many seconds for each turn",
@@ -94,7 +93,7 @@ Hooks.once("init", () => {
   game.settings.register("fatherfog-combat", "gmMuteSelf", {
     name: "Mute Audio For GMs",
     hint: "If enabled, Game Masters will not hear this module's sounds on their own client. Target is always a player only sound.",
-    scope: "client",
+    scope: "world",
     config: true,
     restricted: true,
     type: Boolean,

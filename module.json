@@ -2,7 +2,7 @@
   "id": "fatherfog-combat",
   "title": "Fatherfog Combat",
   "description": "Implements Fatherfog combat rules in Foundry. Players can skip or delare their action. Turns are under a timer.",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "compatibility": {
     "minimum": "13",
     "verified": "14"
@@ -15,7 +15,12 @@
       "url": "https://codabool.com"
     }
   ],
-  "esmodules": ["scripts/main.js", "scripts/settings.js", "scripts/utility.js", "scripts/ui.js"],
+  "esmodules": [
+    "scripts/main.js",
+    "scripts/settings.js",
+    "scripts/utility.js",
+    "scripts/ui.js"
+  ],
   "styles": ["global.css"],
   "socket": true,
   "url": "https://github.com/CodaBool/fatherfog-combat",
